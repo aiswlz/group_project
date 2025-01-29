@@ -1,10 +1,11 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/group-project/aitu-fan/aitu-fan/handlers"
 	"github.com/group-project/aitu-fan/aitu-fan/middleware"
-	"net/http"
 )
 
 func SetupRoutes() *mux.Router {
@@ -22,6 +23,8 @@ func SetupRoutes() *mux.Router {
 	admin := r.PathPrefix("/admin").Subrouter()
 	admin.Use(middleware.AdminMiddleware)
 	admin.HandleFunc("/dashboard", handlers.AdminDashboardHandler).Methods("GET")
+	admin.HandleFunc("/users", handlers.GetUsersHandler).Methods("GET")
+	admin.HandleFunc("/users/{id}", handlers.DeleteUserHandler).Methods("DELETE")
 
 	return r
 }
