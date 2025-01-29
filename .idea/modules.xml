@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+<<<<<<< Updated upstream
       <module fileurl="file://$PROJECT_DIR$/.idea/aitu-fan.iml" filepath="$PROJECT_DIR$/.idea/aitu-fan.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/group_project.iml" filepath="$PROJECT_DIR$/.idea/group_project.iml" />
+>>>>>>> Stashed changes
     </modules>
   </component>
 </project>
