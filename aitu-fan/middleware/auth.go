@@ -28,7 +28,29 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user", token.Claims)
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+			return
+		}
+
+		role, _ := claims["role"].(string)
+
+		ctx := context.WithValue(r.Context(), "user", claims)
+		ctx = context.WithValue(ctx, "role", role)
+
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func AdminRoleMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		role, _ := r.Context().Value("role").(string)
+
+		if role != "admin" {
+			http.Error(w, "Unauthorized", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
 }

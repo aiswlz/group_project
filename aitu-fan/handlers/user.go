@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/group-project/aitu-fan/aitu-fan/database"
-	"github.com/group-project/aitu-fan/aitu-fan/models"
-	"github.com/group-project/aitu-fan/aitu-fan/utils"
 	"net/http"
 )
 

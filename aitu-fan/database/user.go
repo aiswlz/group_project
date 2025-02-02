@@ -1,10 +1,10 @@
 package database
 
 import (
-	"database/sql"
+	_ "database/sql"
 	"github.com/group-project/aitu-fan/aitu-fan/models"
 	_ "github.com/lib/pq"
-	"log"
+	_ "log"
 )
 
 func GetAllUsers() ([]models.User, error) {
