@@ -34,6 +34,13 @@ func ConnectDatabase() {
 		log.Fatal("Error migrating the Event model:", err)
 	}
 	fmt.Println("Database migration completed: Event model created/updated.")
+
+	err = DB.AutoMigrate(&models.User{}, &models.Post{})
+	if err != nil {
+		log.Fatal("Error migrating models:", err)
+	}
+	fmt.Println("Database migration completed: User and Post models created/updated.")
+
 }
 
 func CloseDatabase() {
