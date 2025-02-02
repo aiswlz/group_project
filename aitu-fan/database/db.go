@@ -1,20 +1,16 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 
-	_ "github.com/lib/pq"
+	"github.com/group-project/aitu-fan/aitu-fan/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-var (
-	DB    *gorm.DB
-	sqlDB *sql.DB
-)
+var DB *gorm.DB
 
 func ConnectDatabase() {
 	dsn := fmt.Sprintf(
@@ -33,22 +29,18 @@ func ConnectDatabase() {
 	DB = gormDB
 	fmt.Println("PostgreSQL connected successfully with GORM!")
 
-	sqlDB, err = sql.Open("postgres", dsn)
+	err = DB.AutoMigrate(&models.Event{})
 	if err != nil {
-		log.Fatal("Error connecting to the database using sql.DB:", err)
+		log.Fatal("Error migrating the Event model:", err)
 	}
-
-	err = sqlDB.Ping()
-	if err != nil {
-		log.Fatal("Database is not reachable:", err)
-	}
-
-	fmt.Println("PostgreSQL connected successfully with sql.DB!")
+	fmt.Println("Database migration completed: Event model created/updated.")
 }
 
 func CloseDatabase() {
-	if sqlDB != nil {
-		sqlDB.Close()
-		fmt.Println("Database connection closed.")
+	sqlDB, err := DB.DB()
+	if err != nil {
+		log.Fatal("Error getting underlying SQL DB:", err)
 	}
+	sqlDB.Close()
+	fmt.Println("Database connection closed.")
 }

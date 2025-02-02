@@ -6,10 +6,10 @@ import (
 )
 
 type Event struct {
-	ID          uint      `json:"id" gorm:"primaryKey"`
-	Title       string    `json:"title"`
-	Date        time.Time `json:"date"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          uint      `gorm:"primaryKey"`
+	Title       string    `gorm:"type:varchar(255);not null"`
+	Date        time.Time `gorm:"type:date;not null"`
+	Description string    `gorm:"type:text"`
+	CreatedAt   uint      `gorm:"autoCreateTime"`
+	UpdatedAt   uint      `gorm:"autoUpdateTime"`
 }

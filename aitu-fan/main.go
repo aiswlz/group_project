@@ -10,6 +10,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/group-project/aitu-fan/aitu-fan/database"
+	"github.com/group-project/aitu-fan/aitu-fan/handlers"
 )
 
 var (
@@ -20,12 +23,18 @@ var (
 )
 
 func main() {
+	database.ConnectDatabase()
+
 	r := mux.NewRouter()
 
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/register", registerHandler).Methods("GET", "POST")
 	r.HandleFunc("/login", loginHandler).Methods("GET", "POST")
 	r.HandleFunc("/logout", logoutHandler).Methods("GET")
+
+	r.HandleFunc("/events", handlers.CreateEvent).Methods("POST")
+	r.HandleFunc("/events", handlers.GetEvents).Methods("GET")
+
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	fmt.Println("Server running on port 8080")

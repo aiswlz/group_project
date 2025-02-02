@@ -8,18 +8,9 @@ import (
 	"time"
 )
 
-func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
-	events, err := database.GetAllEvents()
-	if err != nil {
-		http.Error(w, "Failed to retrieve events", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(events)
-}
-
-func CreateEventHandler(w http.ResponseWriter, r *http.Request) {
+func CreateEvent(w http.ResponseWriter, r *http.Request) {
 	var event models.Event
+
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -27,11 +18,25 @@ func CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 
 	event.Date = time.Now()
 
-	if err := database.CreateEvent(event); err != nil {
-		http.Error(w, "Failed to create event", http.StatusInternalServerError)
+	result := database.DB.Create(&event)
+	if result.Error != nil {
+		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Event created successfully"})
+	json.NewEncoder(w).Encode(event)
+}
+
+func GetEvents(w http.ResponseWriter, r *http.Request) {
+	var events []models.Event
+
+	result := database.DB.Find(&events)
+	if result.Error != nil {
+		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(events)
 }
