@@ -23,8 +23,8 @@ func SetupRoutes() *mux.Router {
 	admin := r.PathPrefix("/admin").Subrouter()
 	admin.Use(middleware.AdminMiddleware)
 	admin.HandleFunc("/dashboard", handlers.AdminDashboardHandler).Methods("GET")
-	admin.HandleFunc("/users", handlers.GetUsersHandler).Methods("GET")
-	admin.HandleFunc("/users/{id}", handlers.DeleteUserHandler).Methods("DELETE")
+	admin.HandleFunc("/users", handlers.GetUsers).Methods("GET")
+	admin.HandleFunc("/users/{id}", handlers.DeleteUser).Methods("DELETE")
 
 	events := r.PathPrefix("/events").Subrouter()
 	events.HandleFunc("", handlers.GetEvents).Methods("GET")
