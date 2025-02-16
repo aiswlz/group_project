@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #343a40, #212529);
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-top: 30px;
+            color: #343a40;
+            font-weight: bold;
+        }
+
+        .post-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+        }
+
+        .post-container:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .post-title {
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .post-content {
+            font-size: 16px;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        .post-date {
+            font-size: 13px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .post-image {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .no-image {
+            width: 100%;
+            height: 200px;
+            background: #e1e8ed;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #657786;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="#">AITU Fan</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/create_post"> Add Post</a></li>
+                <li class="nav-item"><a class="nav-link" href="/events"> Events</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" id="galleryLink"> Gallery</a></li>
+                <li class="nav-item"><a class="nav-link" id="myPostsLink" href="/myposts"> My Posts</a></li>
+                <li class="nav-item">
+                    <button class="btn btn-danger px-3" id="logoutBtn"> Logout</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h2 class="dashboard-header"> Dashboard</h2>
+
+    <div id="postsContainer">
+        {{ range .Posts }}
+        <div class="post-container">
+            <div class="post-title">{{ .Title }}</div>
+            <div class="post-content">{{ .Content }}</div>
+            <div class="post-date">Posted on {{ .CreatedAt.Format "02.01.2006" }}</div>
+
+            {{ if .ImageURL }}
+            <img src="{{ .ImageURL }}" class="post-image" alt="Post Image">
+            {{ else }}
+            <div class="no-image">No Image</div>
+            {{ end }}
+        </div>
+        {{ else }}
+        <p class="text-center mt-4"> No available posts</p>
+        {{ end }}
+    </div>
+
+</div>
+
+<footer class="footer">
+    <p>&copy; 2025 AITU Fan | All Rights Reserved</p>
+</footer>
+
+<script>
+    document.getElementById("logoutBtn").addEventListener("click", function() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user_id");
+        window.location.href = "/login";
+    });
+
+    document.getElementById("myPostsLink").addEventListener("click", function(event) {
+        event.preventDefault();
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert(" You are not authorized! Please log in.");
+            window.location.href = "/login";
+            return;
+        }
+        sessionStorage.setItem("authToken", token);
+        window.location.href = "/myposts";
+    });
+
+    document.getElementById("galleryLink").addEventListener("click", function(event) {
+        event.preventDefault();
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert(" You are not authorized! Please log in.");
+            window.location.href = "/login";
+            return;
+        }
+        fetch("/api/gallery", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    throw new Error(" Invalid or missing token!");
+                }
+                return response.text();
+            })
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert(" Error loading gallery: " + error.message);
+            });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
