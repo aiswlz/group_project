@@ -2,25 +2,38 @@ package middleware
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
 )
 
-var jwtSecret = []byte("supersecretkey")
+var JwtSecret = []byte("supersecretkey")
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var tokenString string
+
 		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
+		if authHeader != "" {
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+		} else {
+			cookie, err := r.Cookie("token")
+			if err == nil {
+				tokenString = cookie.Value
+			}
+		}
+
+		if tokenString == "" {
 			http.Error(w, "Token is missing", http.StatusUnauthorized)
 			return
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return jwtSecret, nil
+		claims := jwt.MapClaims{}
+		token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
+			return JwtSecret, nil
 		})
 
 		if err != nil || !token.Valid {
@@ -28,29 +41,31 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+		fmt.Println("JWT Claims:", claims)
+
+		userID, ok := claims["user_id"].(string)
+		if !ok || userID == "" {
+			http.Error(w, "Error: missing userID", http.StatusUnauthorized)
 			return
 		}
 
-		role, _ := claims["role"].(string)
+		userRole, ok := claims["role"].(string)
+		if !ok || userRole == "" {
+			http.Error(w, "Error: missing role", http.StatusUnauthorized)
+			return
+		}
 
-		ctx := context.WithValue(r.Context(), "user", claims)
-		ctx = context.WithValue(ctx, "role", role)
+		ctx := context.WithValue(r.Context(), "userID", userID)
+		ctx = context.WithValue(ctx, "userRole", userRole)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func AdminRoleMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		role, _ := r.Context().Value("role").(string)
-
-		if role != "admin" {
-			http.Error(w, "Unauthorized", http.StatusForbidden)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+func GetUserID(r *http.Request) (string, error) {
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok {
+		return "", errors.New("Error: unable to get userID")
+	}
+	return userID, nil
 }
