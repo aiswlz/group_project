@@ -3,7 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/group-project/aitu-fan/aitu-fan/database"
+	"github.com/gorilla/mux"
+	"github.com/group-project/aitu-fan/database"
 	"net/http"
 )
 
@@ -19,8 +20,9 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("id")
-	if userID == "" {
+	vars := mux.Vars(r)
+	userID, exists := vars["id"]
+	if !exists || userID == "" {
 		http.Error(w, "User ID is required", http.StatusBadRequest)
 		return
 	}
