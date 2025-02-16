@@ -1,53 +1,32 @@
 package database
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"os"
-
-	"github.com/group-project/aitu-fan/aitu-fan/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var DB *gorm.DB
+var Client *mongo.Client
 
-func ConnectDatabase() {
-	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
-	)
+func ConnectMongoDB() error {
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 
-	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
-		log.Fatal("Failed to connect to the database using GORM:", err)
+		return fmt.Errorf("Error connecting to MongoDB: %v", err)
 	}
-	DB = gormDB
-	fmt.Println("PostgreSQL connected successfully with GORM!")
 
-	err = DB.AutoMigrate(&models.Event{})
+	err = client.Ping(context.TODO(), nil)
 	if err != nil {
-		log.Fatal("Error migrating the Event model:", err)
+		return fmt.Errorf("Error connecting to MongoDB: %v", err)
 	}
-	fmt.Println("Database migration completed: Event model created/updated.")
 
-	err = DB.AutoMigrate(&models.User{}, &models.Post{})
-	if err != nil {
-		log.Fatal("Error migrating models:", err)
-	}
-	fmt.Println("Database migration completed: User and Post models created/updated.")
-
+	fmt.Println("Connection to MongoDB is successful!")
+	Client = client
+	return nil
 }
 
-func CloseDatabase() {
-	sqlDB, err := DB.DB()
-	if err != nil {
-		log.Fatal("Error getting underlying SQL DB:", err)
-	}
-	sqlDB.Close()
-	fmt.Println("Database connection closed.")
+func GetCollection(collectionName string) *mongo.Collection {
+	return Client.Database("aitu-fan").Collection(collectionName)
 }
