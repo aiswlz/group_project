@@ -1,41 +1,45 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/gorilla/mux"
-	"github.com/group-project/aitu-fan/aitu-fan/handlers"
-	"github.com/group-project/aitu-fan/aitu-fan/middleware"
+	"github.com/group-project/aitu-fan/handlers"
+	"github.com/group-project/aitu-fan/middleware"
+	"net/http"
 )
 
-func SetupRoutes() *mux.Router {
-	r := mux.NewRouter()
-
-	r.HandleFunc("/register", handlers.RegisterUser).Methods("POST")
-	r.HandleFunc("/login", handlers.LoginUser).Methods("POST")
-
-	api := r.PathPrefix("/api").Subrouter()
-	api.Use(middleware.AuthMiddleware)
-	api.HandleFunc("/protected", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Access to the protected route"))
+func SetupRoutes(router *mux.Router) {
+	router.HandleFunc("/register", handlers.RegisterUser).Methods("POST")
+	router.HandleFunc("/login", handlers.LoginUser).Methods("POST")
+	router.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "templates/register.html")
+	}).Methods("GET")
+	router.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "templates/login.html")
 	}).Methods("GET")
 
-	admin := r.PathPrefix("/admin").Subrouter()
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "templates/home.html")
+	}).Methods("GET")
+	router.HandleFunc("/dashboard", handlers.Dashboard).Methods("GET")
+	router.HandleFunc("/create_post", handlers.CreatePostPage).Methods("GET")
+	router.HandleFunc("/create_event", handlers.CreateEventPage).Methods("GET")
+	router.HandleFunc("/events", handlers.EventsPage).Methods("GET")
+
+	api := router.PathPrefix("/api").Subrouter()
+	api.Use(middleware.AuthMiddleware)
+	api.HandleFunc("/posts", handlers.GetPosts).Methods("GET")
+	api.HandleFunc("/posts", handlers.CreatePost).Methods("POST")
+	api.HandleFunc("/events", handlers.CreateEvent).Methods("POST")
+	api.HandleFunc("/gallery", handlers.GetGallery).Methods("GET")
+	api.HandleFunc("/gallery", handlers.UploadGalleryItem).Methods("POST")
+
+	router.Handle("/myposts", middleware.AuthMiddleware(http.HandlerFunc(handlers.GetMyPosts))).Methods("GET")
+	router.Handle("/editpost/{id}", middleware.AuthMiddleware(http.HandlerFunc(handlers.EditPostPage))).Methods("GET")
+	router.Handle("/editpost/{id}", middleware.AuthMiddleware(http.HandlerFunc(handlers.UpdatePostFromForm))).Methods("POST")
+	router.Handle("/deletepost/{id}", middleware.AuthMiddleware(http.HandlerFunc(handlers.DeletePostHandler))).Methods("POST")
+
+	admin := router.PathPrefix("/admin").Subrouter()
 	admin.Use(middleware.AdminMiddleware)
-	admin.HandleFunc("/dashboard", handlers.AdminDashboardHandler).Methods("GET")
-	admin.HandleFunc("/users", handlers.GetUsers).Methods("GET")
-	admin.HandleFunc("/users/{id}", handlers.DeleteUser).Methods("DELETE")
-
-	events := r.PathPrefix("/events").Subrouter()
-	events.HandleFunc("", handlers.GetEvents).Methods("GET")
-	events.Handle("", middleware.AdminMiddleware(http.HandlerFunc(handlers.CreateEvent))).Methods("POST")
-
-	posts := r.PathPrefix("/posts").Subrouter()
-	posts.HandleFunc("", handlers.GetPosts).Methods("GET")
-	posts.HandleFunc("", handlers.CreatePost).Methods("POST")
-	posts.HandleFunc("/{id}", handlers.UpdatePost).Methods("PUT")
-	posts.HandleFunc("/{id}", handlers.DeletePost).Methods("DELETE")
-
-	return r
-
+	admin.HandleFunc("/users", handlers.GetUsersHandler).Methods("GET")
+	admin.HandleFunc("/users/{id}", handlers.DeleteUserHandler).Methods("DELETE")
 }
