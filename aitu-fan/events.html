@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events | AITU Fan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .navbar {
+            background-color: #000;
+            padding-top: 0.1rem;
+            padding-bottom: 0.1rem;
+            display: flex;
+            align-items: center;
+        }
+        .navbar-brand {
+            margin: 0;
+            padding: 0;
+        }
+        .navbar-brand img {
+            height: 80px;
+        }
+
+        .navbar-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        .navbar-center .navbar-nav {
+            display: flex;
+            align-items: center;
+        }
+        .navbar-center .navbar-nav .nav-link {
+            color: #fff;
+            margin: 0 90px;
+            font-size: 1.1rem;
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+        .navbar-center .navbar-nav .nav-link:hover,
+        .navbar-center .navbar-nav .nav-link:focus {
+            color: #ff7e5f;
+            text-shadow: 0 0 5px rgba(255, 126, 95, 0.7);
+            text-decoration: none;
+        }
+
+        .navbar-end .btn {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .event-item {
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .event-img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+        .event-placeholder {
+            width: 100%;
+            height: 400px;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #555;
+        }
+
+        .event-date {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 50px;
+            padding: 5px 10px;
+            background-color: #fff;
+            color: #333;
+            font-family: sans-serif;
+            font-size: 0.9rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-top: 10px;
+        }
+        .event-date i {
+            margin-right: 5px;
+            font-size: 1rem;
+        }
+
+        .event-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .event-description {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <img src="https://thb.tildacdn.pro/tild6532-6139-4562-b765-363163626437/-/resize/504x/aitu-logo_white.png" alt="AITU Fan Logo">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-center">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/gallery" id="galleryLink">Gallery</a></li>
+                    <li class="nav-item"><a class="nav-link" id="myPostsLink" href="/myposts">My Posts</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/create_event">Add Event</a></li>
+                </ul>
+            </div>
+            <div class="navbar-end">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <button class="btn btn-danger" id="logoutBtn">Logout</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-5 mt-5">
+    <h2 class="text-center mb-4">Upcoming Events</h2>
+    <div class="row" id="eventsContainer">
+        {{range .}}
+        <div class="col-sm-12 col-md-6 col-lg-4">
+            <div class="event-item">
+                {{if .ImageURL}}
+                <img src="{{.ImageURL}}" alt="Event Image" class="event-img">
+                {{else}}
+                <div class="event-placeholder">No Image Available</div>
+                {{end}}
+
+                <div class="event-date">
+                    <i class="bi bi-clock"></i>
+                    {{.Date.Format "02.01.2006"}}
+                </div>
+                <div class="event-title">{{.Title}}</div>
+                <div class="event-description">{{.Description}}</div>
+            </div>
+        </div>
+        {{else}}
+        <p>No available events.</p>
+        {{end}}
+    </div>
+</div>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const userRole = localStorage.getItem("user_role");
+        const addEventBtn = document.querySelector("a[href='/create_event']");
+        if (userRole !== "admin" && addEventBtn) {
+            addEventBtn.style.display = "none";
+        }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", function() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user_id");
+        localStorage.removeItem("user_role");
+        window.location.href = "/login";
+    });
+    document.getElementById("galleryLink").addEventListener("click", function(event) {
+        event.preventDefault();
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("You are not authorized! Please log in.");
+            window.location.href = "/login";
+            return;
+        }
+        fetch("/api/gallery", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    throw new Error("Invalid or missing token!");
+                }
+                return response.text();
+            })
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error loading gallery: " + error.message);
+            });
+    });
+
+
+
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
