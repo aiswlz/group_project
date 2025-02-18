@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery | AITU Fan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+
+
+        body {
+            background-color: #eef2f7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: #000;
+            padding-top: 0.1rem;
+            padding-bottom: 0.1rem;
+            display: flex;
+            align-items: center;
+        }
+        .navbar-brand {
+            margin: 0;
+            padding: 0;
+        }
+        .navbar-brand img {
+            height: 80px;
+        }
+
+        .navbar-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        .navbar-center .navbar-nav {
+            display: flex;
+            align-items: center;
+        }
+        .navbar-center .navbar-nav .nav-link {
+            color: #fff;
+            margin: 0 90px;
+            font-size: 1.1rem;
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+        .navbar-center .navbar-nav .nav-link:hover,
+        .navbar-center .navbar-nav .nav-link:focus {
+            color: #ff7e5f;
+            text-shadow: 0 0 5px rgba(255, 126, 95, 0.7);
+            text-decoration: none;
+        }
+
+        .navbar-end .btn {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            color: #fff;
+            border: none;
+        }
+        .btn-custom:hover {
+            background-color: #43a047;
+        }
+
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding: 0 10px;
+        }
+        .sort-form label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .upload-card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            background: #fff;
+            margin: 0 10px 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            margin: 5px;
+        }
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: #fff;
+            border-radius: 0;
+        }
+        .gallery-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            display: block;
+            border-radius: 0;
+        }
+        .gallery-item .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-weight: 500;
+        }
+        .gallery-item:hover .overlay {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: transparent;
+            border: none;
+        }
+        .modal-img {
+            width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .upload-card h5 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <img src="https://thb.tildacdn.pro/tild6532-6139-4562-b765-363163626437/-/resize/504x/aitu-logo_white.png" alt="AITU Fan Logo">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarGallery" aria-controls="navbarGallery" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarGallery">
+
+            <div class="navbar-center">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="/events">Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/myposts">My Posts</a></li>
+                </ul>
+            </div>
+
+            <div class="navbar-end">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <button class="btn btn-danger" id="logoutBtn">Logout</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid mt-5">
+    <div class="top-controls">
+
+        <form class="sort-form" method="GET" action="/api/gallery">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <label for="sortSelect">Sort by date:</label>
+                </div>
+                <div class="col-auto">
+                    <select name="sort" id="sortSelect" class="form-select" onchange="this.form.submit()">
+                        <option value="date_desc" {{if eq .CurrentSort "date_desc"}}selected{{end}}>Newest first</option>
+                        <option value="date_asc" {{if eq .CurrentSort "date_asc"}}selected{{end}}>Oldest first</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        <button class="btn btn-custom" type="button" data-bs-toggle="collapse" data-bs-target="#uploadCollapse" aria-expanded="false" aria-controls="uploadCollapse">
+            Upload Photo
+        </button>
+    </div>
+
+    <div class="collapse" id="uploadCollapse">
+        <div class="upload-card">
+            <h5>Upload Image</h5>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Image Title:</label>
+                    <input type="text" id="title" name="title" class="form-control" placeholder="Enter image title" required>
+                </div>
+                <div class="mb-3">
+                    <label for="image" class="form-label">Select File:</label>
+                    <input type="file" id="image" name="image" accept="image/*" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-custom" id="uploadBtn">Upload</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="gallery-container">
+        {{range .GalleryItems}}
+        <div class="gallery-item" data-imgsrc="{{.URL}}" data-imgtitle="{{.Title}}">
+            <img src="{{.URL}}" alt="{{.Title}}">
+            <div class="overlay">{{.Title}}</div>
+        </div>
+        {{end}}
+    </div>
+</div>
+
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body d-flex justify-content-center align-items-center">
+                <img id="modalImage" class="modal-img" src="" alt="">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById("logoutBtn").addEventListener("click", function() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user_id");
+        window.location.href = "/login";
+    });
+
+    document.getElementById("uploadForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const uploadBtn = document.getElementById("uploadBtn");
+
+        uploadBtn.disabled = true;
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("Token missing! Please log in.");
+            window.location.href = "/login";
+            return;
+        }
+        const formData = new FormData(this);
+        try {
+            const response = await fetch("/api/gallery", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
+                body: formData
+            });
+            if (response.ok) {
+
+                const newItem = await response.json();
+                if (!newItem || !newItem.URL || !newItem.Title) {
+
+                    alert("Image uploaded successfully! Reloading page...");
+                    window.location.reload();
+                } else {
+
+                    const galleryContainer = document.querySelector('.gallery-container');
+                    const div = document.createElement("div");
+                    div.className = "gallery-item";
+                    div.setAttribute("data-imgsrc", newItem.URL);
+                    div.setAttribute("data-imgtitle", newItem.Title);
+                    const img = document.createElement("img");
+                    img.src = newItem.URL;
+                    img.alt = newItem.Title;
+                    div.appendChild(img);
+                    const overlay = document.createElement("div");
+                    overlay.className = "overlay";
+                    overlay.innerText = newItem.Title;
+                    div.appendChild(overlay);
+
+                    div.addEventListener("click", function() {
+                        const imgSrc = this.getAttribute("data-imgsrc");
+                        const imgTitle = this.getAttribute("data-imgtitle");
+                        document.getElementById("modalImage").src = imgSrc;
+                        document.getElementById("modalImage").alt = imgTitle;
+                        const imageModal = new bootstrap.Modal(document.getElementById("imageModal"));
+                        imageModal.show();
+                    });
+
+                    galleryContainer.prepend(div);
+                    alert("Image uploaded successfully!");
+
+                    document.getElementById("uploadForm").reset();
+                }
+            } else {
+                const data = await response.json();
+                alert("Upload error: " + (data.message || "Unknown error"));
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error: " + error.message);
+        } finally {
+
+            uploadBtn.disabled = false;
+        }
+    });
+
+    document.querySelectorAll('.gallery-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const imgSrc = this.getAttribute('data-imgsrc');
+            const imgTitle = this.getAttribute('data-imgtitle');
+            document.getElementById('modalImage').src = imgSrc;
+            document.getElementById('modalImage').alt = imgTitle;
+            const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            imageModal.show();
+        });
+    });
+</script>
+</body>
+</html>
